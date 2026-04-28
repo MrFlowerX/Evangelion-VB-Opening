@@ -1,0 +1,10 @@
+{
+	"folders": [{
+		"path": "."
+	}
+],
+"settings": {
+	"plugins.user.path": "",
+	"emulator.custom.default": "C:\\Users\\jjflo\\Documents\\VUEngineProjects\\Cowboy_Bebop\\VUEngine-Video-Player-component-specs\\build\\output.vb"
+}
+}

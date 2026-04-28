@@ -1,0 +1,13 @@
+{
+    "_version": "0.6.0",
+    "layers": {
+        "0": "Dangers",
+        "1": "Particles",
+        "2": "Pong Ball",
+        "3": "Pong Paddle",
+        "4": "Pong Paddle Helper",
+        "5": "Pong Walls",
+        "6": "Punk",
+        "7": "Solid"
+    }
+}
