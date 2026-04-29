@@ -2,7 +2,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ConfigPath,
 
-    [string]$OutputPath
+    [string]$OutputPath,
+
+    [string]$GritPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -97,6 +99,33 @@ function Get-SectionAttribute {
         'rom' { return ' __attribute((section(".rodata")))' }
         default { return '' }
     }
+}
+
+function Resolve-GritPath {
+    param([string]$ExplicitPath)
+
+    $candidates = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitPath)) {
+        $candidates += $ExplicitPath
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:VUENGINE_GRIT_PATH)) {
+        $candidates += $env:VUENGINE_GRIT_PATH
+    }
+
+    $pathCommand = Get-Command 'grit.exe' -ErrorAction SilentlyContinue
+    if ($null -ne $pathCommand) {
+        $candidates += $pathCommand.Source
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+
+    throw 'No se encuentra grit.exe. Indica su ruta con -GritPath, define VUENGINE_GRIT_PATH o anade grit.exe al PATH.'
 }
 
 if (-not ('VBPaletteIndexer' -as [type])) {
@@ -218,10 +247,7 @@ if ($pngFiles.Count -eq 0) {
     throw "No se han encontrado PNGs en $assetDirectory"
 }
 
-$gritPath = 'C:\VUEngine\resources\app\binaries\vuengine-studio-tools\win\grit\grit.exe'
-if (-not (Test-Path -LiteralPath $gritPath)) {
-    throw "No se encuentra grit.exe en $gritPath"
-}
+$gritPath = Resolve-GritPath -ExplicitPath $GritPath
 
 $tempDirectory = Join-Path (Join-Path $PSScriptRoot '..\build') ('grit-' + [guid]::NewGuid().ToString('N'))
 $tempDirectory = [System.IO.Path]::GetFullPath($tempDirectory)
