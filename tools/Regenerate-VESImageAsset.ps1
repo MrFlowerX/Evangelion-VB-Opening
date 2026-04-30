@@ -105,6 +105,7 @@ function Resolve-GritPath {
     param([string]$ExplicitPath)
 
     $candidates = @()
+    $relativeGritPath = 'resources\app\binaries\vuengine-studio-tools\win\grit\grit.exe'
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitPath)) {
         $candidates += $ExplicitPath
@@ -114,18 +115,43 @@ function Resolve-GritPath {
         $candidates += $env:VUENGINE_GRIT_PATH
     }
 
+    $installRoots = @(
+        $env:VUENGINE_STUDIO_PATH,
+        $env:VUENGINE_HOME,
+        'C:\VUEngine',
+        (Join-Path $env:USERPROFILE 'VUEngine'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\VUEngine Studio'),
+        (Join-Path $env:LOCALAPPDATA 'VUEngine Studio'),
+        (Join-Path $env:PROGRAMFILES 'VUEngine Studio'),
+        (Join-Path ${env:PROGRAMFILES(X86)} 'VUEngine Studio')
+    )
+
+    foreach ($installRoot in $installRoots) {
+        if (-not [string]::IsNullOrWhiteSpace($installRoot)) {
+            $candidates += (Join-Path $installRoot $relativeGritPath)
+        }
+    }
+
+    $userInstallRoots = @(Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        Join-Path $_.FullName 'VUEngine'
+    })
+
+    foreach ($installRoot in $userInstallRoots) {
+        $candidates += (Join-Path $installRoot $relativeGritPath)
+    }
+
     $pathCommand = Get-Command 'grit.exe' -ErrorAction SilentlyContinue
     if ($null -ne $pathCommand) {
         $candidates += $pathCommand.Source
     }
 
-    foreach ($candidate in $candidates) {
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
         if (Test-Path -LiteralPath $candidate) {
             return (Resolve-Path -LiteralPath $candidate).Path
         }
     }
 
-    throw 'No se encuentra grit.exe. Indica su ruta con -GritPath, define VUENGINE_GRIT_PATH o anade grit.exe al PATH.'
+    throw 'No se encuentra grit.exe. Instala VUEngine Studio en una ruta habitual, indica su ruta con -GritPath, define VUENGINE_GRIT_PATH o anade grit.exe al PATH.'
 }
 
 if (-not ('VBPaletteIndexer' -as [type])) {
